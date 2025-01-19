@@ -64,7 +64,6 @@ void CServer::IocpLoop()
 {
 	while (!m_isStopWorking)
 	{
-		//100ms까지 IOCP 이벤트 대기 
 		IocpEvents ReadEvents;
 		m_Iocp.Wait(ReadEvents, 100);
 
@@ -75,10 +74,10 @@ void CServer::IocpLoop()
 			if (Event.lpCompletionKey == 0)//리슨소켓일 경우
 			{
 				m_ListenSocket.m_isReadOverlapped = false;
-				//Accept는 위에서 완료된 상태이다.
+				//Accept는 이미 Init에서 해주었다.
 				if (m_RemoteClientCandidate->m_TcpSocket.UpdateAcceptContext(m_ListenSocket) != 0)
 				{
-					//리슨소켓을 닫았던지 하면 여기서 에러날거다. 그러면 리슨소켓 불능상태로 만들자.
+					//에러가 나면 리슨소켓 닫기
 					m_ListenSocket.Close();
 				}
 
@@ -86,14 +85,14 @@ void CServer::IocpLoop()
 				{
 					std::shared_ptr<CRemoteClient> RemoteClient = m_RemoteClientCandidate;
 
-					// 새 TCP 소켓 IOCP에 추가한다.
+					// 새 TCP 소켓 IOCP에 추가
 					m_Iocp.Add(m_RemoteClientCandidate->m_TcpSocket, RemoteClient.get());
 
-					// overlapped 수신을 받을 수 있어야 하므로 여기서 I/O 수신 요청을 걸어둔다.
+					// I/O 수신 요청을 걸어둔다.
 					if (RemoteClient->m_TcpSocket.ReceiveOverlapped() != 0
 						&& WSAGetLastError() != ERROR_IO_PENDING)
 					{
-						// 에러. 소켓을 정리하자. 그리고 그냥 버리자.
+						// 에러. 소켓 정리
 						RemoteClient->m_TcpSocket.Close();
 					}
 					else
@@ -102,25 +101,23 @@ void CServer::IocpLoop()
 						ProcessClientEnter(RemoteClient);
 					}
 
-					// 계속해서 소켓 받기를 해야 하므로 리슨소켓도 overlapped I/O를 걸자.
+					// 계속해서 새 연결 받기 위해 리슨소켓도 overlapped I/O 걸기.
 					m_RemoteClientCandidate = std::make_shared<CRemoteClient>(SocketType::Tcp);
 					std::string errorText;
 					if (!m_ListenSocket.AcceptOverlapped(m_RemoteClientCandidate->m_TcpSocket, errorText)
 						&& WSAGetLastError() != ERROR_IO_PENDING)
 					{
-						// 에러나면 리슨소켓 불능 상태로 남기자. 
+						// 에러나면 리슨소켓 정리
 						m_ListenSocket.Close();
 					}
 					else
 					{
-						// 리슨소켓은 연결이 들어옴을 기다리는 상태가 되었다.
 						m_ListenSocket.m_isReadOverlapped = true;
 					}
 				}
 			}
 			else  // TCP 연결 소켓이면
 			{
-				// 받은 데이터를 그대로 회신한다.
 				std::shared_ptr<CRemoteClient> RemoteClient = m_mapRemoteClient[(CRemoteClient*)Event.lpCompletionKey];
 
 				if (Event.dwNumberOfBytesTransferred <= 0)
@@ -153,6 +150,7 @@ void CServer::IocpLoop()
 						auto iterEnd = m_mapRemoteClient.end();
 						for(;iter!=iterEnd;++iter)
 						{
+							//콘솔 상의 테스트에서만 보낸 이한테 제외
 							if (iter->second == RemoteClient)
 								continue;
 
@@ -173,7 +171,7 @@ void CServer::IocpLoop()
 						}
 						else
 						{
-							// I/O를 걸었다. 완료를 대기하는 중 상태로 바꾸자.
+							// I/O를 걸었다. 완료를 대기 상태로 바꾸자.
 							RemoteClient->m_TcpSocket.m_isReadOverlapped = true;
 						}
 					}
@@ -230,7 +228,7 @@ void CServer::CloseServer()
 				iter++;
 		}
 
-		// I/O completion이 발생하면 더 이상 Overlapped I/O를 걸지 말고 '이제 정리해도 돼...'를 플래깅한다.
+		// I/O completion이 발생하면 더 이상 Overlapped I/O를 걸지 말고 이제 정리하자.
 		IocpEvents readEvents;
 		m_Iocp.Wait(readEvents, 100);
 
