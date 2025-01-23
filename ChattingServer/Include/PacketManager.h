@@ -7,6 +7,8 @@ class CPacketManager
 public:
 	bool Init();
 
-	DECLARE_SINGLE(CPacketManager);
+private:
+
+	DECLARE_SINGLETON(CPacketManager);
 };
 
