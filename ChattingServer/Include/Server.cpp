@@ -3,7 +3,7 @@
 #include "RemoteClient.h"
 #include "PacketManager.h"
 
-// TODO : TCP 스트림 일부만 송신하고 리턴하는 경우도 고려, 송수신 기능 패킷매니저로 이관
+// TODO : TCP 스트림 일부만 송신하고 리턴하는 경우도 고려, 송수신 기능 패킷 매니저로 이관, 클라이언트 관리 기능 세션 매니저로 이관
 
 CServer::CServer() :	m_isStopWorking(false),
 						m_ListenSocket(SocketType::Tcp),
@@ -29,7 +29,7 @@ CServer::~CServer()
 		iter = m_mapRemoteClient.erase(iter);
 	}
 
-	CPacketManager::DestroyInst();
+	CPacketManager::DestroySingleInst();
 }
 
 bool CServer::InitServer()
@@ -141,21 +141,11 @@ void CServer::IocpLoop()
 						// 이미 수신된 상태이다.
 						char* echoData = RemoteClient->m_TcpSocket.m_receiveBuffer;
 						int echoDataLength = ec;
-
-						// 원칙대로라면 TCP 스트림 특성상 일부만 송신하고 리턴하는 경우도 고려해야 한다.
-						// 이후에 Overlapped 송신으로변경해야한다.						
-						//*********************************************************
 						
 						auto iter = m_mapRemoteClient.begin();
 						auto iterEnd = m_mapRemoteClient.end();
 						for(;iter!=iterEnd;++iter)
 						{
-							//콘솔 상의 테스트에서만 보낸 이한테 제외
-							if (iter->second == RemoteClient)
-								continue;
-
-							//iter->second->m_TcpSocket.Send(echoData, ec);
-
 							//Overlaaped 송신
 							if (iter->second->m_TcpSocket.OverlappedSend(echoData, ec) == SOCKET_ERROR)
 							{
