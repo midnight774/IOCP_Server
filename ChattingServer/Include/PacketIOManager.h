@@ -8,13 +8,15 @@ class CPacketIOManager
 public:
 	bool Init();
 
+	volatile bool m_IsStopWorking = false;
+
 private:
 	std::mutex m_IOMutex;
-	Iocp m_Iocp;
-	Socket m_ListenSocket;
-	std::vector<std::shared_ptr<std::thread>> m_vecThreadPool;
-	bool m_isStopWorking;
+	CIocp m_Iocp;
+	CSocket m_ListenSocket;
 	std::shared_ptr<CRemoteClient> m_PendingClient;
+
+	std::vector<std::shared_ptr<std::thread>> m_vecThreadPool;
 	int m_ThreadCnt;
 
 public:

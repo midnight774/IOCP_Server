@@ -6,9 +6,9 @@ DEFINITION_SINGLETON(CPacketIOManager);
 
 CPacketIOManager::CPacketIOManager()	:
 	m_ListenSocket(SocketType::Tcp),
-	m_isStopWorking(false)
+	m_IsStopWorking(false)
 {
-	m_ListenSocket.Bind(Endpoint("0.0.0.0", 5555));
+	m_ListenSocket.Bind(CEndpoint("0.0.0.0", 5555));
 
 }
 
@@ -23,9 +23,9 @@ CPacketIOManager::~CPacketIOManager()
 		m_Iocp.Wait(readEvents, 100);
 
 		// 받은 이벤트 각각을 처리
-		for (int i = 0; i < readEvents.m_eventCount; i++)
+		for (int i = 0; i < readEvents.m_EventCount; i++)
 		{
-			auto& readEvent = readEvents.m_events[i];
+			auto& readEvent = readEvents.m_ArrEvents[i];
 			if (readEvent.lpCompletionKey == 0) // 리슨소켓이면
 			{
 				m_ListenSocket.m_isReadOverlapped = false;
@@ -75,16 +75,13 @@ bool CPacketIOManager::Init()
 
 void CPacketIOManager::IocpLoop()
 {
-	while (!m_isStopWorking)
-	{
-		IocpEvents ReadEvents;
-		m_Iocp.Wait(ReadEvents, 100);
+	IocpEvents ReadEvents;
+	m_Iocp.Wait(ReadEvents, 100);
 
-		int EventCnt = ReadEvents.m_eventCount;
-		for (int i = 0; i < EventCnt; ++i)
-		{
-			ProcessIocpEvent(ReadEvents.m_events[i]);
-		}
+	int EventCnt = ReadEvents.m_EventCount;
+	for (int i = 0; i < EventCnt; ++i)
+	{
+		ProcessIocpEvent(ReadEvents.m_ArrEvents[i]);
 	}
 }
 
@@ -125,6 +122,7 @@ void CPacketIOManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 			}
 
 			// 계속해서 새 연결 받기 위해 리슨소켓 overlapped I/O 걸기.
+			m_PendingClient.reset();
 			m_PendingClient = std::make_shared<CRemoteClient>(SocketType::Tcp);
 			std::string errorText;
 			if (!m_ListenSocket.AcceptOverlapped(m_PendingClient->m_TcpSocket, errorText)
@@ -143,47 +141,56 @@ void CPacketIOManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 	{
 		std::shared_ptr<CRemoteClient> RemoteClient = SMInst->FindClient((CRemoteClient*)Event.lpCompletionKey);
 
-		if (Event.dwNumberOfBytesTransferred <= 0)
-		{
-			int a = 0;
-		}
-
 		if (RemoteClient)
 		{
-			// 이미 수신된 상태이다.
-			RemoteClient->SetOverlappedReadFlag(false);
-			int DataLength = Event.dwNumberOfBytesTransferred;
-
-			if (DataLength <= 0)
+			if (Event.lpOverlapped == &(RemoteClient->m_TcpSocket.m_SendOverlappedStruct)) // 송신 이벤트인 경우
 			{
-				// 읽은 결과가 0 혹은 음수이므로 끝내자
-				SMInst->EraseClient(RemoteClient);
 			}
-			else
-			{
-				// 이미 수신된 상태이다.
-				char* EchoData = RemoteClient->m_TcpSocket.m_receiveBuffer;
-				EchoChattingData(EchoData, DataLength);
 
-				// 다시 수신을 받으려면 overlapped I/O를 걸어야 한다.
-				if (RemoteClient->m_TcpSocket.ReceiveOverlapped() != 0
-					&& WSAGetLastError() != ERROR_IO_PENDING)
+			else if(Event.lpOverlapped == &(RemoteClient->m_TcpSocket.m_ReceiveOverlappedStruct))// 수신 이벤트인 경우
+			{
+				RemoteClient->SetOverlappedReceiveFlag(false);
+				int DataLength = Event.dwNumberOfBytesTransferred;
+
+				if (DataLength <= 0)
 				{
-					//오류시 삭제
+					// 읽은 결과가 0 혹은 음수이므로 끝내자
 					SMInst->EraseClient(RemoteClient);
 				}
 				else
 				{
-					// I/O를 걸었다. 완료를 대기 상태로 바꾸자.
-					RemoteClient->SetOverlappedReadFlag(true);
+					char* EchoData = RemoteClient->m_TcpSocket.m_ReceiveBuffer;
+					EchoChattingData(EchoData, DataLength);
+
+					// 다시 수신을 받으려면 overlapped I/O를 걸어야 한다.
+					if (RemoteClient->m_TcpSocket.ReceiveOverlapped() != 0
+						&& WSAGetLastError() != ERROR_IO_PENDING)
+					{
+						//오류시 삭제
+						SMInst->EraseClient(RemoteClient);
+					}
+					else
+					{
+						// I/O를 걸었다. 완료를 대기 상태로 바꾸자.
+						RemoteClient->SetOverlappedReceiveFlag(true);
+					}
 				}
 			}
+			
 		}
 	}
 }
 
 void CPacketIOManager::InitThreadPool(int ThreadCnt)
 {
+	m_ThreadCnt = ThreadCnt;
+
+	for (int i = 0; i < m_ThreadCnt; ++i)
+	{
+		//std::shared_ptr<std::thread> Thread = std::make_shared<std::thread<>()>(this, &CPacketIOManager::ProcessIocpEvent);
+		//m_vecThreadPool.push_back(Thread);
+	}
+
 }
 
 const int CPacketIOManager::GetLeastWorkThreadIdx()
