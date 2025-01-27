@@ -11,8 +11,9 @@
 #include <tchar.h>
 #include <thread>
 #include <memory>
+#include <queue>
 #include <crtdbg.h>
-
+#include <functional>
 
 //User Header
 #include "SockComm.h"
