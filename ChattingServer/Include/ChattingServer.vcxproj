@@ -20,18 +20,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Packet.cpp" />
-    <ClCompile Include="PacketManager.cpp" />
+    <ClCompile Include="PacketIOManager.cpp" />
     <ClCompile Include="RemoteClient.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="SessionManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Flag.h" />
-    <ClInclude Include="Packet.h" />
-    <ClInclude Include="PacketManager.h" />
+    <ClInclude Include="PacketIOManager.h" />
     <ClInclude Include="RemoteClient.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="ServerShared.h" />
+    <ClInclude Include="SessionManager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

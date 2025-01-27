@@ -17,7 +17,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(165);
 
-	CServer* MainChatServer = new CServer;
+	CServer* MainChatServer = new CServer(4);
 	int Ret = -1;
 
 	if (MainChatServer->InitServer())
