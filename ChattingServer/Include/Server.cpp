@@ -6,8 +6,7 @@
 // TODO : TCP 스트림 일부만 송신하고 리턴하는 경우도 고려, 송수신 기능 패킷 매니저로 이관, 클라이언트 관리 기능 세션 매니저로 이관
 
 CServer::CServer() :	m_isStopWorking(false),
-						m_ListenSocket(SocketType::Tcp),
-						m_Iocp(1)
+						m_ListenSocket(SocketType::Tcp)
 {
 	m_ListenSocket.Bind(Endpoint("0.0.0.0", 5555));
 }
@@ -54,8 +53,7 @@ bool CServer::InitServer()
 		return false;
 	}
 
-	std::cout << "서버 시작\n";
-	std::cout << "CLT-C 누를시 종료\n";
+	std::cout << "Chatting Server Starting...\n";
 
 	return true;
 }
@@ -129,9 +127,9 @@ void CServer::IocpLoop()
 				{
 					// 이미 수신된 상태이다.
 					RemoteClient->m_TcpSocket.m_isReadOverlapped = false;
-					int ec = Event.dwNumberOfBytesTransferred;
+					int DataLength = Event.dwNumberOfBytesTransferred;
 
-					if (ec <= 0)
+					if (DataLength <= 0)
 					{
 						// 읽은 결과가 0 혹은 음수이므로 끝내자
 						ProcessClientLeave(RemoteClient);
@@ -139,15 +137,14 @@ void CServer::IocpLoop()
 					else
 					{
 						// 이미 수신된 상태이다.
-						char* echoData = RemoteClient->m_TcpSocket.m_receiveBuffer;
-						int echoDataLength = ec;
+						char* EchoData = RemoteClient->m_TcpSocket.m_receiveBuffer;
 						
 						auto iter = m_mapRemoteClient.begin();
 						auto iterEnd = m_mapRemoteClient.end();
 						for(;iter!=iterEnd;++iter)
 						{
 							//Overlaaped 송신
-							if (iter->second->m_TcpSocket.OverlappedSend(echoData, ec) == SOCKET_ERROR)
+							if (iter->second->m_TcpSocket.OverlappedSend(EchoData, DataLength) == SOCKET_ERROR)
 							{
 								std::cerr << "Error in WSASend" << std::endl;
 							}
@@ -192,19 +189,16 @@ void CServer::ProcessClientLeave(std::shared_ptr<CRemoteClient> RemoteClient)
 
 void CServer::CloseServer()
 {
-	// 루프가 종료됐다. 서버를 종료 하자
-	// 그러나 overlapped I/O가 모두 완료되기 전에는 그냥 무작정 나가면 안된다. 
-	// 백그라운드 진행 중인 Overlapped I/O 완료를 모두 체크하고 종료 하자.
+	// 백그라운드 진행 중인 Overlapped I/O 완료를 모두 체크 후 종료
 	m_ListenSocket.Close();
 	for (auto i : m_mapRemoteClient)
 	{
 		i.second->m_TcpSocket.Close();
 	}
 
-	std::cout << "서버를 종료중\n";
+	std::cout << "Chatting Server Closing...\n";
 	while (m_mapRemoteClient.size() > 0 || m_ListenSocket.m_isReadOverlapped)
 	{
-		// I/O completion이 없는 상태의 RemoteClient를 제거한다.
 		auto iter = m_mapRemoteClient.begin();
 		auto iterEnd = m_mapRemoteClient.end();
 
@@ -218,7 +212,7 @@ void CServer::CloseServer()
 				iter++;
 		}
 
-		// I/O completion이 발생하면 더 이상 Overlapped I/O를 걸지 말고 이제 정리하자.
+		// I/O completion 발생하더라도 정리 한다.
 		IocpEvents readEvents;
 		m_Iocp.Wait(readEvents, 100);
 
@@ -241,7 +235,7 @@ void CServer::CloseServer()
 		}
 	}
 
-	std::cout << "서버 종료.\n";
+	std::cout << "Chatting Server OFF.\n";
 }
 
 int CServer::Run()

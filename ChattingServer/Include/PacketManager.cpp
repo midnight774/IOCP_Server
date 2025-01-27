@@ -15,7 +15,5 @@ CPacketManager::~CPacketManager()
 
 bool CPacketManager::Init()
 {
-
-
 	return true;
 }

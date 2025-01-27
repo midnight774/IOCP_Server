@@ -23,7 +23,7 @@ public:
 	void ProcessClientLeave(std::shared_ptr<CRemoteClient> RemoteClient);
 	void CloseServer();
 
-
+public:
 	int Run();
 
 };
