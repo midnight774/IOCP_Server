@@ -1,6 +1,8 @@
 #include "PacketIOManager.h"
 #include "RemoteClient.h"
 #include "SessionManager.h"
+#include "TaskWorker.h"
+#include "IocpEventTask.h"
 
 DEFINITION_SINGLETON(CPacketIOManager);
 
@@ -59,6 +61,8 @@ bool CPacketIOManager::Init()
 
 	m_ListenSocket.m_isReadOverlapped = true;
 
+	m_ThreadCnt = 4;
+
 	if (m_ThreadCnt == 0)
 	{
 		SYSTEM_INFO SysInfo;
@@ -81,7 +85,11 @@ void CPacketIOManager::IocpLoop()
 	int EventCnt = ReadEvents.m_EventCount;
 	for (int i = 0; i < EventCnt; ++i)
 	{
-		ProcessIocpEvent(ReadEvents.m_ArrEvents[i]);
+		//ProcessIocpEvent(ReadEvents.m_ArrEvents[i]);
+		std::shared_ptr<CIocpEventTask> Task = std::make_shared<CIocpEventTask>(ReadEvents.m_ArrEvents[i]);
+
+		int Idx = GetLeastWorkThreadIdx();
+		m_vecThreadWorker[Idx]->PushTask(Task);
 	}
 }
 
@@ -184,18 +192,32 @@ void CPacketIOManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 void CPacketIOManager::InitThreadPool(int ThreadCnt)
 {
 	m_ThreadCnt = ThreadCnt;
+	m_vecThreadWorker.reserve(m_ThreadCnt);
 
 	for (int i = 0; i < m_ThreadCnt; ++i)
 	{
-		//std::shared_ptr<std::thread> Thread = std::make_shared<std::thread<>()>(this, &CPacketIOManager::ProcessIocpEvent);
-		//m_vecThreadPool.push_back(Thread);
+		std::shared_ptr<CTaskWorker> Worker = std::make_shared<CTaskWorker>();
+		m_vecThreadWorker.push_back(Worker);		
 	}
 
 }
 
 const int CPacketIOManager::GetLeastWorkThreadIdx()
 {
-	return 0;
+	int Idx = 0;
+	size_t MinCnt = m_vecThreadWorker[0]->GetTaskCount();
+
+	for (int i = 1; i < m_ThreadCnt; ++i)
+	{
+		size_t CurcCnt = m_vecThreadWorker[i]->GetTaskCount();
+		if (MinCnt > CurcCnt)
+		{
+			Idx = i;
+			MinCnt = CurcCnt;
+		}
+	}
+
+	return Idx;
 }
 
 void CPacketIOManager::EchoChattingData(char* EchoData, int DataLength)

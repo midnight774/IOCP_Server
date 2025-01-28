@@ -14,6 +14,8 @@
 #include <queue>
 #include <crtdbg.h>
 #include <functional>
+#include <cassert>
+#include <limits>
 
 //User Header
 #include "SockComm.h"
