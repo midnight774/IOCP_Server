@@ -14,19 +14,23 @@ protected:
 	std::shared_ptr<std::thread>			m_Thread;
 	std::mutex								m_Mtx;
 	std::queue<std::shared_ptr<CBaseTask>>	m_qTask;
+	std::condition_variable					m_TaskAvailable;
+	bool									m_IsStop;
 
 public:
 	void Run();
 	
+	
 public:
-	inline const size_t GetTaskCount() const
+	const size_t GetTaskCount();
+	void PushTask(std::shared_ptr<CBaseTask> pTask);
+	void StopThread();
+	
+	
+	void ThreadJoin()
 	{
-		return m_qTask.size();
-	}
-
-	inline void PushTask(std::shared_ptr<CBaseTask> pTask)
-	{
-		m_qTask.push(pTask);
+		if (m_Thread->joinable())
+			m_Thread->join();
 	}
 };
 

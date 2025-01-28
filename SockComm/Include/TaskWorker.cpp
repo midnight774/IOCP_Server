@@ -2,33 +2,64 @@
 #include "TaskWorker.h"
 #include "BaseTask.h"
 
-CTaskWorker::CTaskWorker()
+CTaskWorker::CTaskWorker()	:
+	m_IsStop(false)
 {
 	m_Thread = std::make_shared<std::thread>(&CTaskWorker::Run, this);
-
-	if (m_Thread->joinable())
-		m_Thread->join();
 }
 
 CTaskWorker::~CTaskWorker()
 {
+	if (!m_IsStop)
+	{
+		StopThread();
+	}
 }
 
 void CTaskWorker::Run()
 {
-	while (true)
+	while (!m_IsStop)
 	{
-		//100ms 대기후 큐에 접근한다.
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		std::shared_ptr<CBaseTask> CurTask;
 
-		//추가된 Task 처리
-		std::lock_guard<std::mutex> Lock(m_Mtx);
-		while (!m_qTask.empty())
+		//Task를 꺼내온다.
 		{
-			std::shared_ptr<CBaseTask> CurTask = m_qTask.front();
-			m_qTask.pop();
+			std::lock_guard<std::mutex> Lock(m_Mtx);
 
+			if (!m_qTask.empty())
+			{
+				CurTask = m_qTask.front();
+				m_qTask.pop();
+			}
+		}
+
+		if (CurTask)
 			CurTask->RunTask();
+
+		else
+		{
+			std::unique_lock<std::mutex> Lock(m_Mtx);
+			m_TaskAvailable.wait(Lock, [this]() {return m_IsStop || !m_qTask.empty(); });
 		}
 	}
+}
+
+const size_t CTaskWorker::GetTaskCount()
+{
+	std::lock_guard<std::mutex> Lock(m_Mtx);
+	return m_qTask.size();
+}
+
+void CTaskWorker::PushTask(std::shared_ptr<CBaseTask> pTask)
+{
+	std::lock_guard<std::mutex> Lock(m_Mtx);
+	m_qTask.push(pTask);
+	m_TaskAvailable.notify_all();
+}
+
+void CTaskWorker::StopThread()
+{
+	std::lock_guard<std::mutex> Lock(m_Mtx);
+	m_IsStop = true;
+	m_TaskAvailable.notify_all();
 }
