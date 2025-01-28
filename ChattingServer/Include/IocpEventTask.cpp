@@ -4,12 +4,12 @@
 #include "PacketIOManager.h"
 
 CIocpEventTask::CIocpEventTask()	:
-	m_IocpEvent(nullptr)
+	m_IocpEvent()
 {
 }
 
-CIocpEventTask::CIocpEventTask(OVERLAPPED_ENTRY* pIocpEvent)	:
-	m_IocpEvent(pIocpEvent)
+CIocpEventTask::CIocpEventTask(OVERLAPPED_ENTRY IocpEvent)	:
+	m_IocpEvent(IocpEvent)
 {
 }
 
@@ -19,6 +19,5 @@ CIocpEventTask::~CIocpEventTask()
 
 void CIocpEventTask::RunTask()
 {
-	assert(m_IocpEvent != nullptr);
-	CPacketIOManager::GetInst()->ProcessIocpEvent(*m_IocpEvent);
+	CPacketIOManager::GetInst()->ProcessIocpEvent(m_IocpEvent);
 }

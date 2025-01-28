@@ -8,11 +8,11 @@ class CIocpEventTask :
 {
 public:
 	CIocpEventTask();
-	CIocpEventTask(OVERLAPPED_ENTRY* IocpEvent);
+	CIocpEventTask(OVERLAPPED_ENTRY IocpEvent);
 	virtual ~CIocpEventTask();
 
 protected:
-	OVERLAPPED_ENTRY* m_IocpEvent;
+	OVERLAPPED_ENTRY m_IocpEvent;
 
 public:
 	virtual void RunTask();
