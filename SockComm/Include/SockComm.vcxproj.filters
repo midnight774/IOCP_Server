@@ -42,7 +42,10 @@
     <ClInclude Include="UtilityMacros.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="WorkerThread.h">
+    <ClInclude Include="BaseTask.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskWorker.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -62,7 +65,10 @@
     <ClCompile Include="Endpoint.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="WorkerThread.cpp">
+    <ClCompile Include="BaseTask.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskWorker.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

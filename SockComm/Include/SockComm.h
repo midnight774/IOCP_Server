@@ -5,6 +5,8 @@
 #include "Exception.h"
 #include "UtilityMacros.h"
 #include "Iocp.h"
+#include "ServerFlag.h"
+#include "ServerStruct.h"
 
 #include <mutex>
 #include <queue>
