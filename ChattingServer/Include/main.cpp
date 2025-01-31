@@ -1,5 +1,5 @@
 ﻿
-#include "Server.h"
+#include "ChattingServer.h"
 
 #ifdef _DEBUG
 
@@ -15,9 +15,9 @@
 int main()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	//_CrtSetBreakAlloc(165);
+	//_CrtSetBreakAlloc(169);
 
-	CServer* MainChatServer = new CServer(4);
+	CChattingServer* MainChatServer = new CChattingServer(4);
 	int Ret = -1;
 
 	if (MainChatServer->InitServer())

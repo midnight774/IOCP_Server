@@ -1,5 +1,5 @@
 
-#include "Server.h"
+#include "ChattingServer.h"
 #include "RemoteClient.h"
 #include "PacketIOManager.h"
 #include "SessionManager.h"
@@ -13,19 +13,19 @@ void CloseSignal(int Signal)
 		IsStop = true;
 }
 
-CServer::CServer()
+CChattingServer::CChattingServer()
 {
 }
 
-CServer::CServer(int ThreadCount)
+CChattingServer::CChattingServer(int ThreadCount)
 {
 }
 
-CServer::~CServer()
+CChattingServer::~CChattingServer()
 {
 }
 
-bool CServer::InitServer()
+bool CChattingServer::InitServer()
 {
 	std::cout << "Chatting Server Starting...\n";
 
@@ -41,7 +41,7 @@ bool CServer::InitServer()
 }
 
 
-void CServer::CloseServer()
+void CChattingServer::CloseServer()
 {
 	std::cout << "Chatting Server Closing...\n";
 
@@ -51,7 +51,7 @@ void CServer::CloseServer()
 	std::cout << "Chatting Server OFF.\n";
 }
 
-int CServer::Run()
+int CChattingServer::Run()
 {
 	signal(SIGINT, CloseSignal);
 

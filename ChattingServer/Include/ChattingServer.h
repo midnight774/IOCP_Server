@@ -4,12 +4,12 @@
 
 class CRemoteClient;
 
-class CServer
+class CChattingServer
 {
 public:
-	CServer();
-	CServer(int ThreadCount);
-	~CServer();
+	CChattingServer();
+	CChattingServer(int ThreadCount);
+	~CChattingServer();
 	
 public:
 	bool InitServer();
