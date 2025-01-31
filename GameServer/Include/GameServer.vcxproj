@@ -19,7 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ClientSession.cpp" />
+    <ClCompile Include="GamePacketManager.cpp" />
+    <ClCompile Include="GameServer.cpp" />
+    <ClCompile Include="GameSessionManager.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Packet.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ClientSession.h" />
+    <ClInclude Include="GamePacketManager.h" />
+    <ClInclude Include="GameServer.h" />
+    <ClInclude Include="GameSessionManager.h" />
+    <ClInclude Include="Packet.h" />
+    <ClInclude Include="ServerShared.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

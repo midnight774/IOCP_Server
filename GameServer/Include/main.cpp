@@ -1,5 +1,5 @@
 ﻿
-#include <iostream>
+#include "GameServer.h"
 
 #ifdef _DEBUG
 
@@ -13,5 +13,4 @@
 
 int main()
 {
-    std::cout << "Hello World!\n";
 }
