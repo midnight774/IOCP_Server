@@ -13,8 +13,8 @@ CGamePacketManager::CGamePacketManager() :
 	m_UdpSocket(SocketType::Udp),
 	m_IsStopWorking(false)
 {
-	m_ListenSocket.Bind(CEndpoint("0.0.0.0", 5050));
-	m_UdpSocket.Bind(CEndpoint("0.0.0.0", 5050));
+	m_ListenSocket.Bind(CEndpoint("0.0.0.0", 5555));
+	m_UdpSocket.Bind(CEndpoint("0.0.0.0", 5555));
 }
 
 CGamePacketManager::~CGamePacketManager()
@@ -202,7 +202,29 @@ void CGamePacketManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 				else
 				{
 					char* EchoData = ClientSession->m_TcpSocket.m_ReceiveBuffer;
-					EchoGameData(EchoData, DataLength);
+					//EchoGameData(EchoData, DataLength);
+
+					if ((Packet_Type)EchoData[0] == Packet_Type::Login)
+					{
+						LoginData Data;
+						memset(&Data, 0, sizeof(Data));
+						
+						int Size = sizeof(Packet_Type);
+						memcpy(&Data.IdLength, EchoData + Size, sizeof(int));
+
+						Size += sizeof(int);
+						memcpy(&Data.Id, EchoData + Size, Data.IdLength);
+
+						Size += Data.IdLength;
+						memcpy(&Data.PwLength, EchoData + Size, sizeof(int));
+						
+						Size += sizeof(int);
+						memcpy(&Data.Password, EchoData + Size, Data.PwLength);
+
+						std::cout << Data.Id << '\t' << Data.Password << '\n';
+					}
+
+
 
 					// 다시 수신을 받으려면 overlapped I/O를 걸어야 한다.
 					if (ClientSession->m_TcpSocket.ReceiveOverlapped() != 0
