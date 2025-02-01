@@ -99,6 +99,17 @@ int CSocket::OverlappedSend(char* data, int length)
 	return WSASend(m_SocketHandle, &Buffer, 1, &BytesSent, 0, &m_SendOverlappedStruct, NULL);
 }
 
+int CSocket::OverlappedSendTo(char* data, int Length, CEndpoint& Addr)
+{
+	WSABUF Buffer;
+	DWORD  BytesSent;
+	Buffer.buf = reinterpret_cast<char*>(data);
+	Buffer.len = strlen(data);
+	sockaddr* SendAddr = reinterpret_cast<sockaddr*>(&Addr.m_IPv4Endpoint);
+
+	return WSASendTo(m_SocketHandle, &Buffer, 1, &BytesSent, 0, SendAddr, sizeof(SendAddr), &m_SendOverlappedStruct, nullptr);
+}
+
 void CSocket::Close()
 {
 #ifdef _WIN32
@@ -224,6 +235,17 @@ int CSocket::ReceiveOverlapped()
 	m_readFlags = { 0 };
 
 	return WSARecv(m_SocketHandle, &Buffer, 1, NULL, &m_readFlags, &m_ReceiveOverlappedStruct, NULL);
+}
+
+int CSocket::ReceiveFromOverlapped(CEndpoint& Addr)
+{
+	WSABUF Buffer;
+	Buffer.buf = m_ReceiveBuffer;
+	Buffer.len = MaxReceiveLength;
+
+	m_readFlags = { 0 };
+
+	return WSARecvFrom(m_SocketHandle, &Buffer, 1, nullptr, &m_readFlags, &m_SenderAddr, 0,&m_ReceiveOverlappedStruct, nullptr);
 }
 
 // 논블록 소켓으로 모드를 설정합니다.

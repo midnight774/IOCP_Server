@@ -3,8 +3,12 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <mswsock.h>
-
 #include <string>
+
+#ifdef _WIN32
+#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "mswsock.lib")
+#endif
 
 class CEndpoint;
 
@@ -20,6 +24,12 @@ static bool IsCalledStartUp = false;
 class CSocket
 {
 public:
+	CSocket();
+	CSocket(SOCKET fd);
+	CSocket(SocketType socketType);
+	~CSocket();
+
+public:
 	static const int MaxReceiveLength = 8192;
 
 	SOCKET m_SocketHandle;
@@ -27,12 +37,15 @@ public:
 	// AcceptEx 함수 포인터
 	LPFN_ACCEPTEX AcceptEx = NULL;
 
-	//AdressData
+	//AdressData TCP일때 사용
 	char m_AcceptBuffer[1024] = {};
 	sockaddr_in m_LocalAdress;
 	sockaddr_in m_RemoteAdress;
 	int			m_LocalAddrLength;
 	int			m_RemoteAddrLength;
+
+	//UDP 소켓일 때 사용 정보
+	sockaddr	m_SenderAddr; //UDP 어디서 온건지
 
 	//SendData
 	WSAOVERLAPPED m_SendOverlappedStruct;
@@ -48,15 +61,12 @@ public:
 	bool m_isReadOverlapped = false; //overlapped I/O Receive 중이면 true입니다. 완료시 false
 	DWORD m_readFlags = 0;
 
-	CSocket();
-	CSocket(SOCKET fd);
-	CSocket(SocketType socketType);
-	~CSocket();
-
+public:
 	void Bind(const CEndpoint& endpoint);
 	void Connect(const CEndpoint& endpoint);
 	int Send(const char* data, int length);
 	int OverlappedSend(char* data, int length);
+	int OverlappedSendTo(char* data, int Length, CEndpoint& Addr);
 	void Close();
 	void Listen();
 	int Accept(CSocket& acceptedSocket, std::string& errorText);
@@ -69,14 +79,10 @@ public:
 	int Receive();
 
 	int ReceiveOverlapped();
+	int ReceiveFromOverlapped(CEndpoint& addr);
 
 	void SetNonblocking();
 	
 };
 
 std::string GetLastErrorAsString();
-
-#ifdef _WIN32
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "mswsock.lib")
-#endif
