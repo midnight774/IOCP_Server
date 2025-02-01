@@ -4,7 +4,8 @@ CClientSession::CClientSession()
 {
 }
 
-CClientSession::CClientSession(SocketType socketType)
+CClientSession::CClientSession(SocketType socketType)	:
+	m_TcpSocket(socketType)
 {
 }
 

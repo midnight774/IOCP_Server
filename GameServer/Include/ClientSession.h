@@ -14,7 +14,6 @@ public:
 	CSocket m_TcpSocket;
 	CEndpoint m_ClientEndpoint;
 
-
 public:
 	//이동 데이터를 보낼 용도, 아이템 데이터 보낼 용도 등,
 	int OverlappedSend(char* data, int length);
