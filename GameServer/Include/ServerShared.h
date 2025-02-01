@@ -1,6 +1,9 @@
 
 #pragma once
 
+//lib Link
+#pragma comment(lib, "odbc32.lib")
+
 //Header
 
 #include <unordered_map>
@@ -18,6 +21,7 @@
 #include <functional>
 #include <cassert>
 #include <limits>
+#include <sqlext.h>
 
 //User Header
 #include "SockComm.h"
