@@ -4,5 +4,6 @@ enum class Packet_Type : UINT8
 {
 	Login = 0,
 	Logout,
+	Register,
 	CharacterMove,
 };
