@@ -15,6 +15,7 @@ private:
 	std::mutex m_IOMutex;
 	CIocp m_Iocp;
 	CSocket m_ListenSocket;
+	CSocket m_UdpSocket;
 	std::shared_ptr<CClientSession> m_PendingClient;
 
 	std::vector<std::shared_ptr<CTaskWorker>> m_vecThreadWorker;

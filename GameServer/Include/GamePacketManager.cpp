@@ -6,11 +6,15 @@
 
 DEFINITION_SINGLETON(CGamePacketManager);
 
+//TODO : 스레드 Task 제작, IOCP에 UDP소켓 추가할 때 어떤 주소로 지정할지 고민
+
 CGamePacketManager::CGamePacketManager() :
 	m_ListenSocket(SocketType::Tcp),
+	m_UdpSocket(SocketType::Udp),
 	m_IsStopWorking(false)
 {
-	m_ListenSocket.Bind(CEndpoint("0.0.0.0", 5555));
+	m_ListenSocket.Bind(CEndpoint("0.0.0.0", 5050));
+	m_UdpSocket.Bind(CEndpoint("0.0.0.0", 5050));
 }
 
 CGamePacketManager::~CGamePacketManager()
@@ -46,7 +50,8 @@ CGamePacketManager::~CGamePacketManager()
 bool CGamePacketManager::Init()
 {
 	m_ListenSocket.Listen();
-	m_Iocp.Add(m_ListenSocket, nullptr);
+	m_Iocp.Add(m_ListenSocket, nullptr); // Completion Key == nullptr == 0
+	m_Iocp.Add(m_UdpSocket, &m_UdpSocket);
 
 	//Overlapped Accept
 	m_PendingClient = std::make_shared<CClientSession>(SocketType::Tcp);
@@ -143,6 +148,38 @@ void CGamePacketManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 			}
 		}
 	}
+	else if ((CSocket*)Event.lpCompletionKey == &m_UdpSocket) //UDP 통신인 경우
+	{
+		if (Event.lpOverlapped == &m_UdpSocket.m_SendOverlappedStruct) // 송신 이벤트인 경우
+		{
+		}
+
+		else if (Event.lpOverlapped == &m_UdpSocket.m_ReceiveOverlappedStruct)// 수신 이벤트인 경우
+		{
+			char* Data = m_UdpSocket.m_ReceiveBuffer;
+			
+			Packet_Type Type = (Packet_Type)-1;
+			memcpy(&Type, Data, sizeof(Packet_Type));
+			
+			switch (Type)
+			{
+			case Packet_Type::CharacterMove:
+			{
+				//유효한 데이터 크기인지 체크 해야한다.
+				CharacterMoveData MoveData;
+				memcpy(&MoveData, Data + sizeof(Packet_Type), sizeof(CharacterMoveData));
+
+				//이후 처리
+			}
+				break;
+
+
+			}
+			
+
+		}
+	}
+
 	else  // TCP 연결 소켓이면
 	{
 		std::shared_ptr<CClientSession> ClientSession = SMInst->FindClient((CClientSession*)Event.lpCompletionKey);
@@ -160,7 +197,6 @@ void CGamePacketManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 
 				if (DataLength <= 0)
 				{
-					// 읽은 결과가 0 혹은 음수이므로 끝내자
 					SMInst->EraseClient(ClientSession);
 				}
 				else
