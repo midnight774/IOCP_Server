@@ -71,6 +71,16 @@ void CSocket::Bind(const CEndpoint& endpoint)
 	}
 }
 
+void CSocket::Bind(const sockaddr& endpoint)
+{
+	if (bind(m_SocketHandle, &endpoint, sizeof(endpoint)) < 0)
+	{
+		stringstream ss;
+		ss << "bind failed:" << GetLastErrorAsString();
+		throw Exception(ss.str().c_str());
+	}
+}
+
 // endpoint가 가리키는 주소로 연결
 void CSocket::Connect(const CEndpoint& endpoint)
 {
@@ -82,10 +92,31 @@ void CSocket::Connect(const CEndpoint& endpoint)
 	}
 }
 
+void CSocket::Connect(const sockaddr& endpoint)
+{
+	if (connect(m_SocketHandle, &endpoint, sizeof(endpoint)) < 0)
+	{
+		stringstream ss;
+		ss << "connect failed:" << GetLastErrorAsString();
+		throw Exception(ss.str().c_str());
+	}
+}
+
 // 송신
 int CSocket::Send(const char* data, int length)
 {
 	return send(m_SocketHandle, data, length, 0);
+}
+
+// 송신
+int CSocket::SendTo(const char* data, int length, const CEndpoint& endpoint)
+{
+	return sendto(m_SocketHandle, data, length, 0, (sockaddr*)&endpoint.m_IPv4Endpoint, sizeof(sockaddr_in));
+}
+
+int CSocket::SendTo(const char* data, int length, const sockaddr& endpoint)
+{
+	return sendto(m_SocketHandle, data, length, 0, &endpoint, sizeof(sockaddr_in));
 }
 
 //Overlapped I/O 전용 송신 -> Windows 전용

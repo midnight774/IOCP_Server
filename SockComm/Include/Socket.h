@@ -63,8 +63,15 @@ public:
 
 public:
 	void Bind(const CEndpoint& endpoint);
+	void Bind(const sockaddr& endpoint);
 	void Connect(const CEndpoint& endpoint);
+	void Connect(const sockaddr& endpoint);
 	int Send(const char* data, int length);
+	
+	int SendTo(const char* data, int length, const CEndpoint& endpoint);
+
+	int SendTo(const char* data, int length, const sockaddr& endpoint);
+	
 	int OverlappedSend(char* data, int length);
 	int OverlappedSendTo(char* data, int Length, CEndpoint& Addr);
 	void Close();
