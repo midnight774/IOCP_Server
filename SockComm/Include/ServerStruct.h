@@ -9,9 +9,7 @@ struct LoginData
 	char	Password[256];
 
 };
-#pragma pack()
 
-#pragma pack(1)
 struct RegisterData
 {
 	int		IdLength;
@@ -19,12 +17,25 @@ struct RegisterData
 	int		PwLength;
 	char	Password[256];
 };
-#pragma pack(1)
 
 struct CharacterMoveData
 {
-	UINT8 Dir;
-	float Velocity;
-	float PosX;
-	float PosY;
+	LARGE_INTEGER Time;
+	UINT	ObjectID;
+	UINT8	Dir;
+	float	PosX;
+	float	PosY;
+	bool	IsEnd;
 };
+
+struct SpawnCharacterData
+{
+	UINT	ObjectID;
+	UINT	CharacterType;
+	bool	IsLocal;
+	float	PosX;
+	float	PosY;
+};
+
+#pragma pack()
+

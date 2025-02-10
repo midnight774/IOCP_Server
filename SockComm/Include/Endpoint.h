@@ -7,6 +7,7 @@ class CEndpoint
 public:
 	CEndpoint();
 	CEndpoint(const char* Address, int PortNum);
+	CEndpoint(sockaddr_in& Addr);
 	~CEndpoint();
 
 	sockaddr_in m_IPv4Endpoint;

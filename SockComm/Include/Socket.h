@@ -84,9 +84,11 @@ public:
 
 	CEndpoint GetPeerAddr();
 	int Receive();
+	int ReceiveFrom(const CEndpoint& Addr);
 
 	int ReceiveOverlapped();
-	int ReceiveFromOverlapped(CEndpoint& addr);
+	int ReceiveFromOverlapped(const CEndpoint& addr);
+	int ReceiveFromOverlapped();
 
 	void SetNonblocking();
 	

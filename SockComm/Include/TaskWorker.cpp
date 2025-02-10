@@ -13,6 +13,9 @@ CTaskWorker::~CTaskWorker()
 	if (!m_IsStop)
 	{
 		StopThread();
+
+		if (m_Thread->joinable())
+			m_Thread->join();
 	}
 }
 

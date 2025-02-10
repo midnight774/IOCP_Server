@@ -11,4 +11,3 @@
 #include <mutex>
 #include <queue>
 #include <chrono>
-#include <wincrypt.h>

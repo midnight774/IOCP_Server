@@ -111,7 +111,7 @@ int CSocket::Send(const char* data, int length)
 // 송신
 int CSocket::SendTo(const char* data, int length, const CEndpoint& endpoint)
 {
-	return sendto(m_SocketHandle, data, length, 0, (sockaddr*)&endpoint.m_IPv4Endpoint, sizeof(sockaddr_in));
+	return sendto(m_SocketHandle, data, length, 0, (sockaddr*)&endpoint.m_IPv4Endpoint, sizeof(endpoint));
 }
 
 int CSocket::SendTo(const char* data, int length, const sockaddr& endpoint)
@@ -125,7 +125,7 @@ int CSocket::OverlappedSend(char* data, int length)
 	WSABUF Buffer;
 	DWORD  BytesSent;
 	Buffer.buf = reinterpret_cast<char*>(data);
-	Buffer.len = strlen(data);
+	Buffer.len = length;
 	
 	return WSASend(m_SocketHandle, &Buffer, 1, &BytesSent, 0, &m_SendOverlappedStruct, NULL);
 }
@@ -135,10 +135,9 @@ int CSocket::OverlappedSendTo(char* data, int Length, CEndpoint& Addr)
 	WSABUF Buffer;
 	DWORD  BytesSent;
 	Buffer.buf = reinterpret_cast<char*>(data);
-	Buffer.len = strlen(data);
-	sockaddr* SendAddr = reinterpret_cast<sockaddr*>(&Addr.m_IPv4Endpoint);
+	Buffer.len = Length;
 
-	return WSASendTo(m_SocketHandle, &Buffer, 1, &BytesSent, 0, SendAddr, sizeof(SendAddr), &m_SendOverlappedStruct, nullptr);
+	return WSASendTo(m_SocketHandle, &Buffer, 1, &BytesSent, 0, (sockaddr*)&Addr.m_IPv4Endpoint, sizeof(sockaddr_in), &m_SendOverlappedStruct, nullptr);
 }
 
 void CSocket::Close()
@@ -256,6 +255,13 @@ int CSocket::Receive()
 	return (int)recv(m_SocketHandle, m_ReceiveBuffer, MaxReceiveLength, 0);
 }
 
+int CSocket::ReceiveFrom(const CEndpoint& Addr)
+{
+	m_RemoteAddrLength = sizeof(sockaddr_in);
+	memset(&m_RemoteAdress, 0, sizeof(sockaddr_in));
+	return (int)recvfrom(m_SocketHandle, m_ReceiveBuffer, MaxReceiveLength, 0, (sockaddr*)&m_RemoteAdress, &m_RemoteAddrLength);
+}
+
 //Overlapped I/O 수신
 int CSocket::ReceiveOverlapped()
 {
@@ -268,7 +274,7 @@ int CSocket::ReceiveOverlapped()
 	return WSARecv(m_SocketHandle, &Buffer, 1, NULL, &m_readFlags, &m_ReceiveOverlappedStruct, NULL);
 }
 
-int CSocket::ReceiveFromOverlapped(CEndpoint& Addr)
+int CSocket::ReceiveFromOverlapped(const CEndpoint& Addr)
 {
 	WSABUF Buffer;
 	Buffer.buf = m_ReceiveBuffer;
@@ -277,6 +283,17 @@ int CSocket::ReceiveFromOverlapped(CEndpoint& Addr)
 	m_readFlags = { 0 };
 
 	return WSARecvFrom(m_SocketHandle, &Buffer, 1, nullptr, &m_readFlags, &m_SenderAddr, 0,&m_ReceiveOverlappedStruct, nullptr);
+}
+
+int CSocket::ReceiveFromOverlapped()
+{
+	WSABUF Buffer;
+	Buffer.buf = m_ReceiveBuffer;
+	Buffer.len = MaxReceiveLength;
+
+	m_readFlags = { 0 };
+
+	return WSARecvFrom(m_SocketHandle, &Buffer, 1, nullptr, &m_readFlags, nullptr, 0, &m_ReceiveOverlappedStruct, nullptr);
 }
 
 // 논블록 소켓으로 모드를 설정합니다.

@@ -124,6 +124,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -145,6 +146,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -160,6 +162,8 @@
     <ClInclude Include="Exception.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Iocp.h" />
+    <ClInclude Include="ServerFlag.h" />
+    <ClInclude Include="ServerStruct.h" />
     <ClInclude Include="SockComm.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="stdafx.h" />

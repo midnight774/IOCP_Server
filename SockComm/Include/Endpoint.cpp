@@ -17,6 +17,12 @@ CEndpoint::CEndpoint(const char* Address, int PortNum)
 	m_IPv4Endpoint.sin_port = htons((uint16_t)PortNum);
 }
 
+CEndpoint::CEndpoint(sockaddr_in& Addr)
+{
+	memset(&m_IPv4Endpoint, 0, sizeof(sockaddr_in));
+	memcpy(&m_IPv4Endpoint, &Addr, sizeof(sockaddr_in));
+}
+
 CEndpoint::~CEndpoint()
 {
 }
