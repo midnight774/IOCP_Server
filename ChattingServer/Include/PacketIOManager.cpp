@@ -10,12 +10,18 @@ CPacketIOManager::CPacketIOManager()	:
 	m_ListenSocket(SocketType::Tcp),
 	m_IsStopWorking(false)
 {
-	m_ListenSocket.Bind(CEndpoint("0.0.0.0", 5555));
+	m_ListenSocket.Bind(CEndpoint("0.0.0.0", 55555));
 
 }
 
 CPacketIOManager::~CPacketIOManager()
 {
+	for (int i = 0; i < m_vecThreadWorker.size(); ++i)
+	{
+		m_vecThreadWorker[i]->StopThread();
+		m_vecThreadWorker[i]->ThreadJoin();
+	}
+
 	m_ListenSocket.Close();
 
 	// 백그라운드 진행 중인 Overlapped I/O 완료를 모두 체크 후 종료
@@ -42,6 +48,7 @@ CPacketIOManager::~CPacketIOManager()
 			}
 		}
 	}
+
 }
 
 bool CPacketIOManager::Init()
