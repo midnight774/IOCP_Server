@@ -33,6 +33,7 @@ private:
 public:
 	void EchoGameData(char* EchoData, int DataLength);
 	void EchoClientEnterData(std::shared_ptr<CClientSession> Session);
+	void EchoClientLeaveData(std::shared_ptr<CClientSession> Session);
 
 private:
 	void PrcoessLoginPacket(char* Data, int DataLength);

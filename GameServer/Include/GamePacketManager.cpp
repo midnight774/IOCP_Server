@@ -183,6 +183,7 @@ void CGamePacketManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 				if (DataLength <= 0)
 				{
 					SMInst->EraseClient(ClientSession);
+					EchoClientLeaveData(ClientSession);
 				}
 				else
 				{
@@ -390,6 +391,38 @@ void CGamePacketManager::EchoClientEnterData(std::shared_ptr<CClientSession> Ses
 	if (Session->m_TcpSocket.OverlappedSend(EchoData, TotalSize) == (-1))
 	{
 		std::cerr << "Error in WSASend" << std::endl;
+	}
+}
+
+void CGamePacketManager::EchoClientLeaveData(std::shared_ptr<CClientSession> Session)
+{
+	CGameSessionManager* SMInst = CGameSessionManager::GetInst();
+	std::unordered_map<CClientSession*, std::shared_ptr<CClientSession>> mapClientSession = SMInst->GetAllSessions();
+
+	auto iter = mapClientSession.begin();
+	auto iterEnd = mapClientSession.end();
+
+	char EchoData[512] = {};
+	int Size = 0;
+	Packet_Type Type = Packet_Type::Despawn;
+
+	memcpy(EchoData, &Type, sizeof(UINT8));
+	Size += sizeof(UINT8);
+
+	int ObjID = Session->m_ClientCharacterInfo->GetObjectID();
+	memcpy(EchoData + Size, &ObjID, sizeof(int));
+	Size += sizeof(int);
+
+	int TotalSize = Size;
+
+	for (; iter != iterEnd; ++iter)
+	{
+		//Overlaaped ¼Û½Å
+		if (iter->second->m_TcpSocket.OverlappedSend(EchoData, Size) == SOCKET_ERROR)
+		{
+			std::cerr << "Error in WSASend" << std::endl;
+		}
+
 	}
 }
 
