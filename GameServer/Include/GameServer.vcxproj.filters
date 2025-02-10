@@ -13,6 +13,24 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="01. Main">
+      <UniqueIdentifier>{a765e32e-d5c8-405a-8339-95ab19598fb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Manager">
+      <UniqueIdentifier>{e8cbc02c-b117-49df-89a4-d8f5ce5895b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Session">
+      <UniqueIdentifier>{6c304713-58a0-4a70-8ed4-d2a43c6a3cda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. Packet">
+      <UniqueIdentifier>{ece2ec70-f1e8-4b7c-8c19-f4bfa5b7a4cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="05. GameLogic">
+      <UniqueIdentifier>{6d227583-ee24-4008-86de-44c9bf10f139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="06. Math">
+      <UniqueIdentifier>{dfbd302e-e791-4206-9729-1a75757cb26e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -21,37 +39,88 @@
     <ClCompile Include="Packet.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="GameServer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="GameSessionManager.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="ClientSession.cpp">
+    <ClCompile Include="DBManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="GamePacketManager.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>02. Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSessionManager.cpp">
+      <Filter>02. Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="GameServer.cpp">
+      <Filter>01. Main</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientSession.cpp">
+      <Filter>03. Session</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector2.cpp">
+      <Filter>06. Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector3.cpp">
+      <Filter>06. Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector4.cpp">
+      <Filter>06. Math</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjectInfo.cpp">
+      <Filter>05. GameLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="UpdateCharacterTask.cpp">
+      <Filter>05. GameLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="Matrix.cpp">
+      <Filter>06. Math</Filter>
+    </ClCompile>
+    <ClCompile Include="GameLogicManager.cpp">
+      <Filter>02. Manager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Packet.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="GameServer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="ServerShared.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="GameSessionManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="ClientSession.h">
+    <ClInclude Include="DBManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="GamePacketManager.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>02. Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSessionManager.h">
+      <Filter>02. Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="GameServer.h">
+      <Filter>01. Main</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientSession.h">
+      <Filter>03. Session</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector4.h">
+      <Filter>06. Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector2.h">
+      <Filter>06. Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3.h">
+      <Filter>06. Math</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjectInfo.h">
+      <Filter>05. GameLogic</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateCharacterTask.h">
+      <Filter>05. GameLogic</Filter>
+    </ClInclude>
+    <ClInclude Include="Matrix.h">
+      <Filter>06. Math</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineMath.h">
+      <Filter>06. Math</Filter>
+    </ClInclude>
+    <ClInclude Include="GameLogicManager.h">
+      <Filter>02. Manager</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

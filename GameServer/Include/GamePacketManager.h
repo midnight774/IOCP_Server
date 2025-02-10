@@ -17,8 +17,7 @@ private:
 	CSocket m_ListenSocket;
 	CSocket m_UdpSocket;
 	std::shared_ptr<CClientSession> m_PendingClient;
-
-	std::vector<std::shared_ptr<CTaskWorker>> m_vecThreadWorker;
+	std::vector<std::shared_ptr<CTaskWorker>> m_vecIOCPWorker;
 	int m_ThreadCnt;
 
 public:
@@ -30,7 +29,14 @@ public:
 private:
 	void InitThreadPool(int ThreadCnt);
 	const int GetLeastWorkThreadIdx();
+
+public:
 	void EchoGameData(char* EchoData, int DataLength);
+	void EchoClientEnterData(std::shared_ptr<CClientSession> Session);
+
+private:
+	void PrcoessLoginPacket(char* Data, int DataLength);
+	void ProcessCharacterMovePacket(char* Data, int DataLength);
 
 	DECLARE_SINGLETON(CGamePacketManager);
 };

@@ -3,6 +3,8 @@
 #include "ClientSession.h"
 #include "GameSessionManager.h"
 #include "TaskWorker.h"
+#include "GameLogicManager.h"
+#include "GameObjectInfo.h"
 
 DEFINITION_SINGLETON(CGamePacketManager);
 
@@ -14,7 +16,7 @@ CGamePacketManager::CGamePacketManager() :
 	m_IsStopWorking(false)
 {
 	m_ListenSocket.Bind(CEndpoint("0.0.0.0", 5555));
-	m_UdpSocket.Bind(CEndpoint("0.0.0.0", 5555));
+	m_UdpSocket.Bind(CEndpoint("0.0.0.0", 50500));
 }
 
 CGamePacketManager::~CGamePacketManager()
@@ -63,9 +65,11 @@ bool CGamePacketManager::Init()
 		throw Exception("Overlapped AcceptEx Failed");
 	}
 
+	m_UdpSocket.ReceiveFromOverlapped();
+
 	m_ListenSocket.m_isReadOverlapped = true;
 
-	m_ThreadCnt = 4;
+	m_ThreadCnt = 12;
 
 	if (m_ThreadCnt == 0)
 	{
@@ -129,11 +133,11 @@ void CGamePacketManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 			else
 			{
 				//클라이언트 서버 입장 처리
+				EchoClientEnterData(ClientSession);
 				SMInst->InsertClient(ClientSession);
 			}
 
 			// 계속해서 새 연결 받기 위해 리슨소켓 overlapped I/O 걸기.
-			m_PendingClient.reset();
 			m_PendingClient = std::make_shared<CClientSession>(SocketType::Tcp);
 			std::string errorText;
 			if (!m_ListenSocket.AcceptOverlapped(m_PendingClient->m_TcpSocket, errorText)
@@ -156,27 +160,8 @@ void CGamePacketManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 
 		else if (Event.lpOverlapped == &m_UdpSocket.m_ReceiveOverlappedStruct)// 수신 이벤트인 경우
 		{
+			int DataLength = Event.dwNumberOfBytesTransferred;
 			char* Data = m_UdpSocket.m_ReceiveBuffer;
-			
-			Packet_Type Type = (Packet_Type)-1;
-			memcpy(&Type, Data, sizeof(Packet_Type));
-			
-			switch (Type)
-			{
-			case Packet_Type::CharacterMove:
-			{
-				//유효한 데이터 크기인지 체크 해야한다.
-				CharacterMoveData MoveData;
-				memcpy(&MoveData, Data + sizeof(Packet_Type), sizeof(CharacterMoveData));
-
-				//이후 처리
-			}
-				break;
-
-
-			}
-			
-
 		}
 	}
 
@@ -201,30 +186,61 @@ void CGamePacketManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 				}
 				else
 				{
-					char* EchoData = ClientSession->m_TcpSocket.m_ReceiveBuffer;
+					char* RecvData = ClientSession->m_TcpSocket.m_ReceiveBuffer;
 					//EchoGameData(EchoData, DataLength);
 
-					if ((Packet_Type)EchoData[0] == Packet_Type::Login)
+					int DataLength = Event.dwNumberOfBytesTransferred;
+
+					Packet_Type Type = (Packet_Type)-1;
+					memcpy(&Type, RecvData, sizeof(Packet_Type));
+
+					switch (Type)
 					{
+					case Packet_Type::Login:
+					{
+						//유효한 데이터 크기인지 체크 해야한다.
 						LoginData Data;
 						memset(&Data, 0, sizeof(Data));
-						
+
 						int Size = sizeof(Packet_Type);
-						memcpy(&Data.IdLength, EchoData + Size, sizeof(int));
-
+						memcpy(&Data.IdLength, RecvData + Size, sizeof(int));
 						Size += sizeof(int);
-						memcpy(&Data.Id, EchoData + Size, Data.IdLength);
-
+						memcpy(&Data.Id, RecvData + Size, Data.IdLength);
 						Size += Data.IdLength;
-						memcpy(&Data.PwLength, EchoData + Size, sizeof(int));
-						
+						memcpy(&Data.PwLength, RecvData + Size, sizeof(int));
 						Size += sizeof(int);
-						memcpy(&Data.Password, EchoData + Size, Data.PwLength);
+						memcpy(&Data.Password, RecvData + Size, Data.PwLength);
 
 						std::cout << Data.Id << '\t' << Data.Password << '\n';
+						//이후 처리
+						break;
+					}
+					case Packet_Type::Logout:
+					{
+
+						break;
+					}
+					case Packet_Type::Register:
+					{
+
+						break;
+					}
+					case Packet_Type::CharacterMove:
+					{
+						ProcessCharacterMovePacket(RecvData, DataLength);
+						break;
+					}
+					case Packet_Type::Endpoint:
+					{
+						sockaddr_in Addr;
+						int Size = sizeof(Packet_Type);
+						memcpy(&Addr, RecvData + Size, sizeof(sockaddr_in));
+
+						ClientSession->m_ClientUdpEndpoint.m_IPv4Endpoint = Addr;
 					}
 
 
+					}
 
 					// 다시 수신을 받으려면 overlapped I/O를 걸어야 한다.
 					if (ClientSession->m_TcpSocket.ReceiveOverlapped() != 0
@@ -247,25 +263,24 @@ void CGamePacketManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 
 void CGamePacketManager::InitThreadPool(int ThreadCnt)
 {
-	m_ThreadCnt = ThreadCnt;
-	m_vecThreadWorker.reserve(m_ThreadCnt);
+	/*m_ThreadCnt = ThreadCnt;
+	m_vecIOCPWorker.reserve(m_ThreadCnt);
 
 	for (int i = 0; i < m_ThreadCnt; ++i)
 	{
 		std::shared_ptr<CTaskWorker> Worker = std::make_shared<CTaskWorker>();
-		m_vecThreadWorker.push_back(Worker);
-	}
-
+		m_vecIOCPWorker.push_back(Worker);
+	}*/
 }
 
 const int CGamePacketManager::GetLeastWorkThreadIdx()
 {
 	int Idx = 0;
-	size_t MinCnt = m_vecThreadWorker[0]->GetTaskCount();
+	size_t MinCnt = m_vecIOCPWorker[0]->GetTaskCount();
 
 	for (int i = 1; i < m_ThreadCnt; ++i)
 	{
-		size_t CurcCnt = m_vecThreadWorker[i]->GetTaskCount();
+		size_t CurcCnt = m_vecIOCPWorker[i]->GetTaskCount();
 		if (MinCnt > CurcCnt)
 		{
 			Idx = i;
@@ -287,9 +302,152 @@ void CGamePacketManager::EchoGameData(char* EchoData, int DataLength)
 	for (; iter != iterEnd; ++iter)
 	{
 		//Overlaaped 송신
-		if (iter->second->OverlappedSend(EchoData, DataLength) == SOCKET_ERROR)
+		CEndpoint Addr = iter->second->m_ClientUdpEndpoint;
+
+		//Test용
+		inet_pton(AF_INET, "127.0.0.1", &Addr.m_IPv4Endpoint.sin_addr);
+		
+		if (m_UdpSocket.OverlappedSendTo(EchoData, DataLength, Addr) == SOCKET_ERROR)
+		{
+			int Error = WSAGetLastError();
+			if(Error == ERROR_IO_PENDING)
+				std::cerr << "Error in WSASend" << std::endl;
+		}		
+	}
+}
+
+void CGamePacketManager::EchoClientEnterData(std::shared_ptr<CClientSession> Session)
+{
+	CGameSessionManager* SMInst = CGameSessionManager::GetInst();
+	std::unordered_map<CClientSession*, std::shared_ptr<CClientSession>> mapClientSession = SMInst->GetAllSessions();
+
+	auto iter = mapClientSession.begin();
+	auto iterEnd = mapClientSession.end();
+
+	char EchoData[1024] = {};
+	int Size = 0;
+	Packet_Type Type = Packet_Type::Spawn;
+	
+	memset(EchoData, 1, 100);
+	memcpy(EchoData, &Type, sizeof(UINT8));
+	Size += sizeof(UINT8);
+	int Cnt = 1;
+	memcpy(EchoData + Size, &Cnt, sizeof(int));
+	Size += sizeof(int);
+
+	/*
+	UINT	ObjectID;
+	UINT	CharacterType;
+	bool	IsLocal;
+	float	PosX;
+	float	PosY;
+	*/
+	
+	SpawnCharacterData Data;
+	Data.CharacterType = 0;
+	Data.ObjectID = SMInst->GetNewClientID();
+	Data.PosX = 500.f;
+	Data.PosY = 500.f;//테스트용 좌표
+	Data.IsLocal = false;
+	memcpy(EchoData + Size, &Data.ObjectID, sizeof(UINT));
+	Size += sizeof(UINT);
+	memcpy(EchoData + Size, &Data.CharacterType, sizeof(UINT));
+	Size += sizeof(UINT);
+	memcpy(EchoData + Size, &Data.IsLocal, sizeof(bool));
+	Size += sizeof(bool);
+	memcpy(EchoData + Size, &Data.PosX, sizeof(float));
+	Size += sizeof(float);
+	memcpy(EchoData + Size, &Data.PosY, sizeof(float));
+	Size += sizeof(float);
+
+	int TotalSize = Size;
+
+	for (; iter != iterEnd; ++iter)
+	{
+		//Overlaaped 송신
+		if (iter->second->m_TcpSocket.OverlappedSend(EchoData, Size) == SOCKET_ERROR)
 		{
 			std::cerr << "Error in WSASend" << std::endl;
 		}
+
+		SpawnCharacterData SpawnData;
+		SpawnData.CharacterType = 0;
+		SpawnData.ObjectID = iter->second->m_ClientCharacterInfo->GetObjectID();
+		SpawnData.PosX = iter->second->m_ClientCharacterInfo->GetPos().x;
+		SpawnData.PosY = iter->second->m_ClientCharacterInfo->GetPos().y;//테스트용 좌표
+		SpawnData.IsLocal = false;
+		memcpy(EchoData + TotalSize, &SpawnData, sizeof(CharacterMoveData));
+		TotalSize += sizeof(CharacterMoveData);
+		++Cnt;
 	}
+
+	Data.IsLocal = true;
+	memcpy(EchoData + sizeof(UINT8), &Cnt, sizeof(int));
+	memcpy(EchoData + Size - sizeof(float) * 2 - sizeof(bool), &Data.IsLocal, sizeof(bool));
+
+	//본인한테 보낸다.
+	//Session->m_TcpSocket.Send(EchoData, Size + 1);
+	if (Session->m_TcpSocket.OverlappedSend(EchoData, TotalSize) == (-1))
+	{
+		std::cerr << "Error in WSASend" << std::endl;
+	}
+}
+
+void CGamePacketManager::PrcoessLoginPacket(char* Data, int DataLengt)
+{
+}
+
+void CGamePacketManager::ProcessCharacterMovePacket(char* Data, int DataLength)
+{
+	CharacterMoveData MoveData;
+
+	memset(&MoveData, 0, sizeof(Data));
+	int Size = sizeof(Packet_Type);
+	LARGE_INTEGER Time = {};
+	memcpy(&Time, Data + Size, sizeof(LARGE_INTEGER));
+	Size += sizeof(LARGE_INTEGER);
+	memcpy(&MoveData.ObjectID, Data + Size, sizeof(UINT));
+	Size += sizeof(UINT);
+	memcpy(&MoveData.Dir, Data + Size, sizeof(UINT8));
+	Size += sizeof(UINT8);
+	memcpy(&MoveData.PosX, Data + Size, sizeof(float));
+	Size += sizeof(float);
+	memcpy(&MoveData.PosY, Data + Size, sizeof(float));
+	Size += sizeof(float);
+	memcpy(&MoveData.IsEnd, Data + Size, sizeof(bool));
+
+	std::shared_ptr<CClientSession> Session = CGameSessionManager::GetInst()->FindSessionByObjectID(MoveData.ObjectID);
+
+	Vector3 Dir;
+	switch (MoveData.Dir)
+	{
+	case 0:
+		Dir = Vector3(-1.f, 0.f, 0.f);
+		break;
+	case 1:
+		Dir = Vector3(0.f, 1.f, 0.f);
+		break;
+	case 2:
+		Dir = Vector3(0.f, -1.f, 0.f);
+		break;
+	case 3:
+		Dir = Vector3(1.f, 0.f, 0.f);
+		break;
+	}
+
+	if (MoveData.IsEnd)
+	{
+		Session->m_ClientCharacterInfo->AddMoveDir(Dir * -1);
+	}
+
+	else
+	{
+		Session->m_ClientCharacterInfo->AddMoveDir(Dir);
+		Session->m_ClientCharacterInfo->SetPos(Vector3(MoveData.PosX, MoveData.PosY, 0.f));
+	}
+
+	Session->m_ClientCharacterInfo->SetLastUpdateTime(Time);
+
+	CGameLogicManager::GetInst()->AddUpdateClient(Session);
+
 }

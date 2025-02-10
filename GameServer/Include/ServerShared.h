@@ -2,7 +2,6 @@
 #pragma once
 
 //lib Link
-#pragma comment(lib, "odbc32.lib")
 
 //Header
 
@@ -21,9 +20,10 @@
 #include <functional>
 #include <cassert>
 #include <limits>
-#include <sqlext.h>
 
 //User Header
 #include "SockComm.h"
+#include "Vector3.h"
 
 //struct
+
