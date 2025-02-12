@@ -43,8 +43,8 @@ void CGameLogicManager::UpdateCharacter()
 
             auto iter = m_mapUpdateClient.begin();
             auto iterEnd = m_mapUpdateClient.end();
-            int Size = sizeof(UINT8);
-            Size += sizeof(int);
+            int Stride = sizeof(UINT8);
+            Stride += sizeof(int);
             int Cnt = 0;
 
             LARGE_INTEGER   Time = {};
@@ -79,8 +79,8 @@ void CGameLogicManager::UpdateCharacter()
                     ObjInfo->SetLastObjectView(MoveDir);
                 }
                 
-                memcpy(DataToSend + Size, &Data, sizeof(CharacterMoveData));
-                Size += sizeof(CharacterMoveData);
+                memcpy(DataToSend + Stride, &Data, sizeof(CharacterMoveData));
+                Stride += sizeof(CharacterMoveData);
                 ++Cnt;
 
                 if (Data.IsEnd)
