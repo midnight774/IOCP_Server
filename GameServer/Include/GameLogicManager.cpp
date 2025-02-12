@@ -95,7 +95,7 @@ void CGameLogicManager::UpdateCharacter()
                 Packet_Type Type = Packet_Type::CharacterMove;
                 memcpy(DataToSend, &Type, sizeof(UINT8));
                 memcpy(DataToSend + sizeof(UINT8), &Cnt, sizeof(int));
-                CGamePacketManager::GetInst()->EchoGameData(DataToSend, Size);
+                CGamePacketManager::GetInst()->EchoGameData(DataToSend, Stride);
             }
         }
 
