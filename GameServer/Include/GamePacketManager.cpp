@@ -329,7 +329,7 @@ void CGamePacketManager::EchoClientEnterData(std::shared_ptr<CClientSession> Ses
 	int Size = 0;
 	Packet_Type Type = Packet_Type::Spawn;
 	
-	memset(EchoData, 1, 100);
+	memset(EchoData, 0, 1024);
 	memcpy(EchoData, &Type, sizeof(UINT8));
 	Size += sizeof(UINT8);
 	int Cnt = 1;
@@ -350,6 +350,7 @@ void CGamePacketManager::EchoClientEnterData(std::shared_ptr<CClientSession> Ses
 	Data.PosX = 500.f;
 	Data.PosY = 500.f;//테스트용 좌표
 	Data.IsLocal = false;
+	Data.ViewDir = 0;
 	memcpy(EchoData + Size, &Data.ObjectID, sizeof(UINT));
 	Size += sizeof(UINT);
 	memcpy(EchoData + Size, &Data.CharacterType, sizeof(UINT));
@@ -360,6 +361,8 @@ void CGamePacketManager::EchoClientEnterData(std::shared_ptr<CClientSession> Ses
 	Size += sizeof(float);
 	memcpy(EchoData + Size, &Data.PosY, sizeof(float));
 	Size += sizeof(float);
+	memcpy(EchoData + Size, &Data.ViewDir, sizeof(UINT8));
+	Size += sizeof(UINT8);
 
 	int TotalSize = Size;
 
@@ -377,14 +380,15 @@ void CGamePacketManager::EchoClientEnterData(std::shared_ptr<CClientSession> Ses
 		SpawnData.PosX = iter->second->m_ClientCharacterInfo->GetPos().x;
 		SpawnData.PosY = iter->second->m_ClientCharacterInfo->GetPos().y;//테스트용 좌표
 		SpawnData.IsLocal = false;
-		memcpy(EchoData + TotalSize, &SpawnData, sizeof(CharacterMoveData));
-		TotalSize += sizeof(CharacterMoveData);
+		SpawnData.ViewDir = iter->second->m_ClientCharacterInfo->GetLastObjectView();
+		memcpy(EchoData + TotalSize, &SpawnData, sizeof(SpawnCharacterData));
+		TotalSize += sizeof(SpawnCharacterData);
 		++Cnt;
 	}
 
 	Data.IsLocal = true;
 	memcpy(EchoData + sizeof(UINT8), &Cnt, sizeof(int));
-	memcpy(EchoData + Size - sizeof(float) * 2 - sizeof(bool), &Data.IsLocal, sizeof(bool));
+	memcpy(EchoData + Size - sizeof(UINT8) - sizeof(float) * 2 - sizeof(bool), &Data.IsLocal, sizeof(bool));;
 
 	//본인한테 보낸다.
 	//Session->m_TcpSocket.Send(EchoData, Size + 1);
@@ -422,7 +426,6 @@ void CGamePacketManager::EchoClientLeaveData(std::shared_ptr<CClientSession> Ses
 		{
 			std::cerr << "Error in WSASend" << std::endl;
 		}
-
 	}
 }
 

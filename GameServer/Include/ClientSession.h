@@ -11,8 +11,8 @@ public:
 	~CClientSession();
 
 public:
-	std::mutex					m_Mutex;
 	std::shared_ptr<std::thread> m_Thread;
+	std::mutex					m_Mutex;
 	CSocket m_TcpSocket;
 	CEndpoint m_ClientUdpEndpoint;
 	std::shared_ptr<CGameObjectInfo> m_ClientCharacterInfo;

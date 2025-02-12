@@ -73,6 +73,11 @@ void CGameLogicManager::UpdateCharacter()
                 Data.PosY = MovePos.y;
                 Data.ObjectID = ObjInfo->GetObjectID();
                 Data.IsEnd = MoveDir == Vector3(0.f, 0.f, 0.f) ? true : false;
+
+                if (!Data.IsEnd)
+                {
+                    ObjInfo->SetLastObjectView(MoveDir);
+                }
                 
                 memcpy(DataToSend + Size, &Data, sizeof(CharacterMoveData));
                 Size += sizeof(CharacterMoveData);

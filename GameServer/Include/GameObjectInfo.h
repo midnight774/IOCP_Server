@@ -12,6 +12,7 @@ private:
 	UINT	m_ObjectID;
 	Vector3 m_Pos;
 	Vector3	m_MoveDir;
+	UINT8	m_ObjectView;
 	bool	m_IsMoving;
 	float	m_MoveSpeed;
 	LARGE_INTEGER	m_LastUpdateTime;
@@ -67,6 +68,12 @@ public:
 		return m_Mtx;
 	}
 	
+	void SetLastObjectView(const Vector3& Dir);
+
+	UINT8 GetLastObjectView()
+	{
+		return m_ObjectView;
+	}
 	
 
 };
