@@ -35,6 +35,7 @@ struct SpawnCharacterData
 	bool	IsLocal;
 	float	PosX;
 	float	PosY;
+	UINT8	ViewDir;
 };
 
 #pragma pack()
