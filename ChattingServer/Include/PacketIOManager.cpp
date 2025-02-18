@@ -204,7 +204,7 @@ void CPacketIOManager::InitThreadPool(int ThreadCnt)
 	for (int i = 0; i < m_ThreadCnt; ++i)
 	{
 		std::shared_ptr<CTaskWorker> Worker = std::make_shared<CTaskWorker>();
-		m_vecThreadWorker.push_back(Worker);		
+		m_vecThreadWorker.push_back(Worker);	
 	}
 
 }
