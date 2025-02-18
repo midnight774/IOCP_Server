@@ -2,6 +2,7 @@
 #include "GameLogicManager.h"
 #include "GamePacketManager.h"
 #include "ClientSession.h"
+#include "PacketSerializer.h"
 #include "GameObjectInfo.h"
 
 DEFINITION_SINGLETON(CGameLogicManager);
@@ -39,8 +40,6 @@ void CGameLogicManager::UpdateCharacter()
         {
             std::lock_guard<std::mutex> LockGuard(m_Mtx);
 
-            char DataToSend[512] = {};
-
             auto iter = m_mapUpdateClient.begin();
             auto iterEnd = m_mapUpdateClient.end();
             int Stride = sizeof(UINT8);
@@ -49,6 +48,8 @@ void CGameLogicManager::UpdateCharacter()
 
             LARGE_INTEGER   Time = {};
             QueryPerformanceCounter(&Time);
+            std::vector<CharacterMoveData> vecMoveData;
+            vecMoveData.reserve(m_mapUpdateClient.size());
 
             for (; iter != iterEnd;)
             {
@@ -64,26 +65,18 @@ void CGameLogicManager::UpdateCharacter()
                 Vector3 MovePos = CurPos + MoveDir * 200.f * DeltaTime;
                 ObjInfo->SetPos(MovePos);
                 ObjInfo->SetLastUpdateTime(Time);
-                
-                CharacterMoveData Data;
-                memset(&Data, 0, sizeof(CharacterMoveData));
-                Data.Time = Time;
-                Data.Dir = 0;
-                Data.PosX = MovePos.x;
-                Data.PosY = MovePos.y;
-                Data.ObjectID = ObjInfo->GetObjectID();
-                Data.IsEnd = MoveDir == Vector3(0.f, 0.f, 0.f) ? true : false;
 
-                if (!Data.IsEnd)
+                //Serializer에 넘겨줄 데이터 담는다.
+                vecMoveData.emplace_back(Time, ObjInfo->GetObjectID(), 0, MovePos.x, MovePos.y, MoveDir == Vector3(0.f, 0.f, 0.f));
+
+                if (!(MoveDir == Vector3(0.f, 0.f, 0.f)))
                 {
                     ObjInfo->SetLastObjectView(MoveDir);
                 }
                 
-                memcpy(DataToSend + Stride, &Data, sizeof(CharacterMoveData));
-                Stride += sizeof(CharacterMoveData);
                 ++Cnt;
 
-                if (Data.IsEnd)
+                if (MoveDir == Vector3(0.f, 0.f, 0.f))
                     iter = m_mapUpdateClient.erase(iter);
 
                 else
@@ -92,10 +85,11 @@ void CGameLogicManager::UpdateCharacter()
 
             if(Cnt != 0)
             {
-                Packet_Type Type = Packet_Type::CharacterMove;
-                memcpy(DataToSend, &Type, sizeof(UINT8));
-                memcpy(DataToSend + sizeof(UINT8), &Cnt, sizeof(int));
-                CGamePacketManager::GetInst()->EchoGameData(DataToSend, Stride);
+                char DataToSend[1024];
+                memset(DataToSend, 0, 1024);
+                int DataSize = 0;
+                CPacketSerializer::SerializeCharacterMoves(vecMoveData, DataToSend, DataSize);
+                CGamePacketManager::GetInst()->EchoGameData(DataToSend, DataSize);
             }
         }
 

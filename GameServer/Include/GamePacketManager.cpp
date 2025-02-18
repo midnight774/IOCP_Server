@@ -5,6 +5,7 @@
 #include "TaskWorker.h"
 #include "GameLogicManager.h"
 #include "GameObjectInfo.h"
+#include "PacketSerializer.h"
 
 DEFINITION_SINGLETON(CGamePacketManager);
 
@@ -328,44 +329,14 @@ void CGamePacketManager::EchoClientEnterData(std::shared_ptr<CClientSession> Ses
 	char EchoData[1024] = {};
 	int Size = 0;
 	Packet_Type Type = Packet_Type::Spawn;
+
+	std::vector<SpawnCharacterData> vecSpawnData;
+	vecSpawnData.reserve(mapClientSession.size() + 1);
+	vecSpawnData.emplace_back(SMInst->GetNewClientID(), 0, false, 500.f, 500.f, 0);//초기 생성시 테스트용 좌표로 생성
+
+	//기존 유저들에게 보낼 정보 생성
+	CPacketSerializer::SerializeCharacterSpawns(vecSpawnData, EchoData, Size);
 	
-	memset(EchoData, 0, 1024);
-	memcpy(EchoData, &Type, sizeof(UINT8));
-	Size += sizeof(UINT8);
-	int Cnt = 1;
-	memcpy(EchoData + Size, &Cnt, sizeof(int));
-	Size += sizeof(int);
-
-	/*
-	UINT	ObjectID;
-	UINT	CharacterType;
-	bool	IsLocal;
-	float	PosX;
-	float	PosY;
-	*/
-	
-	SpawnCharacterData Data;
-	Data.CharacterType = 0;
-	Data.ObjectID = SMInst->GetNewClientID();
-	Data.PosX = 500.f;
-	Data.PosY = 500.f;//테스트용 좌표
-	Data.IsLocal = false;
-	Data.ViewDir = 0;
-	memcpy(EchoData + Size, &Data.ObjectID, sizeof(UINT));
-	Size += sizeof(UINT);
-	memcpy(EchoData + Size, &Data.CharacterType, sizeof(UINT));
-	Size += sizeof(UINT);
-	memcpy(EchoData + Size, &Data.IsLocal, sizeof(bool));
-	Size += sizeof(bool);
-	memcpy(EchoData + Size, &Data.PosX, sizeof(float));
-	Size += sizeof(float);
-	memcpy(EchoData + Size, &Data.PosY, sizeof(float));
-	Size += sizeof(float);
-	memcpy(EchoData + Size, &Data.ViewDir, sizeof(UINT8));
-	Size += sizeof(UINT8);
-
-	int TotalSize = Size;
-
 	for (; iter != iterEnd; ++iter)
 	{
 		//Overlaaped 송신
@@ -374,24 +345,16 @@ void CGamePacketManager::EchoClientEnterData(std::shared_ptr<CClientSession> Ses
 			std::cerr << "Error in WSASend" << std::endl;
 		}
 
-		SpawnCharacterData SpawnData;
-		SpawnData.CharacterType = 0;
-		SpawnData.ObjectID = iter->second->m_ClientCharacterInfo->GetObjectID();
-		SpawnData.PosX = iter->second->m_ClientCharacterInfo->GetPos().x;
-		SpawnData.PosY = iter->second->m_ClientCharacterInfo->GetPos().y;//테스트용 좌표
-		SpawnData.IsLocal = false;
-		SpawnData.ViewDir = iter->second->m_ClientCharacterInfo->GetLastObjectView();
-		memcpy(EchoData + TotalSize, &SpawnData, sizeof(SpawnCharacterData));
-		TotalSize += sizeof(SpawnCharacterData);
-		++Cnt;
+		std::shared_ptr<CGameObjectInfo> pInfo = iter->second->m_ClientCharacterInfo;
+		vecSpawnData.emplace_back(pInfo->GetObjectID(), 0, false, pInfo->GetPos().x, pInfo->GetPos().y, pInfo->GetLastObjectView());
 	}
 
-	Data.IsLocal = true;
-	memcpy(EchoData + sizeof(UINT8), &Cnt, sizeof(int));
-	memcpy(EchoData + Size - sizeof(UINT8) - sizeof(float) * 2 - sizeof(bool), &Data.IsLocal, sizeof(bool));;
+	//새로 들어온 유저에게 기존 유저 정보 보내준다.
+	vecSpawnData[0].IsLocal = true;
+	int TotalSize = 0;
+	memset(EchoData, 0, 1024);
+	CPacketSerializer::SerializeCharacterSpawns(vecSpawnData, EchoData, TotalSize);
 
-	//본인한테 보낸다.
-	//Session->m_TcpSocket.Send(EchoData, Size + 1);
 	if (Session->m_TcpSocket.OverlappedSend(EchoData, TotalSize) == (-1))
 	{
 		std::cerr << "Error in WSASend" << std::endl;
