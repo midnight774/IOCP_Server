@@ -80,3 +80,44 @@ bool CPacketSerializer::DeserializeCharacterMoves(const char* InBuffer, const in
 
 	return true;
 }
+
+bool CPacketSerializer::SerializeCharacterAttack(const std::vector<CharacterAttackData>& InDatas, char* OutBuffer, int& OutSize)
+{
+	Packet_Type Type = Packet_Type::CharacterAttack;
+
+	size_t DataCnt = InDatas.size();
+	int Stride = 0;
+	memcpy(OutBuffer, &Type, sizeof(UINT8));//패킷 처음에 패킷 타입 정보를 담는다.
+	Stride += sizeof(UINT8);
+	memcpy(OutBuffer + Stride, &DataCnt, sizeof(int));
+	Stride += sizeof(int);
+
+	for (int i = 0; i < DataCnt; ++i)
+	{
+		memcpy(OutBuffer + Stride, &InDatas[i], sizeof(CharacterAttackData));
+		Stride += sizeof(CharacterAttackData);
+	}
+
+	OutSize = Stride;
+
+	return true;
+}
+
+bool CPacketSerializer::DeserializeCharacterAttack(const char* InBuffer, const int InSize, std::vector<CharacterAttackData>& OutDatas)
+{
+	int Stride = sizeof(Packet_Type);
+
+	int DataCnt = 0;
+	memcpy(&DataCnt, InBuffer + Stride, sizeof(int));
+	Stride += sizeof(int);
+
+	OutDatas.resize(DataCnt);
+
+	for (int i = 0; i < DataCnt; ++i)
+	{
+		memcpy(&OutDatas[i], InBuffer + Stride, sizeof(CharacterAttackData));
+		Stride += sizeof(CharacterAttackData);
+	}
+
+	return true;
+}

@@ -8,5 +8,7 @@ enum class Packet_Type : UINT8
 	Spawn,
 	Despawn,
 	CharacterMove,
+	CharacterAttack,
+	AttackBox,
 	Endpoint
 };

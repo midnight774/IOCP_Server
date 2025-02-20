@@ -79,5 +79,43 @@ struct SpawnCharacterData
 	{}
 };
 
+struct CharacterAttackData
+{
+	UINT	ObjectID;
+	float	PosX;
+	float	PosY;
+	UINT8	ViewDir;
+
+	CharacterAttackData() {};
+	CharacterAttackData(UINT _ObjectID, float _PosX, float _PosY, UINT8 _ViewDir) :
+		ObjectID(_ObjectID),
+		PosX(_PosX),
+		PosY(_PosY),
+		ViewDir(_ViewDir)
+	{}
+};
+
+struct AttackColliderBoxData
+{
+	UINT CauserID;
+	UINT CauserProfile;
+	float Left;
+	float Bottom;
+	float Right;
+	float Top;
+	float Damage;
+
+	AttackColliderBoxData() {};
+	AttackColliderBoxData(UINT _CauserID, UINT _CauserProfile, float _Left, float _Bottom, float _Right, float _Top, float _Damage) :
+		CauserID(_CauserID),
+		CauserProfile(_CauserProfile),
+		Left(_Left),
+		Bottom(_Bottom),
+		Right(_Right),
+		Top(_Top),
+		Damage(_Damage)
+	{}
+};
+
 #pragma pack()
 

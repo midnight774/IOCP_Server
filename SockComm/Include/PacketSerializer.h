@@ -12,5 +12,8 @@ public:
 	static bool SerializeCharacterMoves(const std::vector<CharacterMoveData>& InDatas, char* OutBuffer, int& OutSize);
 	static bool DeserializeCharacterMoves(const char* InBuffer, const int InSize, std::vector<CharacterMoveData>& OutDatas);
 
+	static bool SerializeCharacterAttack(const std::vector<CharacterAttackData>& InDatas, char* OutBuffer, int& OutSize);
+	static bool DeserializeCharacterAttack(const char* InBuffer, const int InSize, std::vector<CharacterAttackData>& OutDatas);
+
 };
 
