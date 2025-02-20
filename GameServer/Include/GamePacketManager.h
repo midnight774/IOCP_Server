@@ -38,6 +38,7 @@ public:
 private:
 	void PrcoessLoginPacket(char* Data, int DataLength);
 	void ProcessCharacterMovePacket(char* Data, int DataLength);
+	void ProcessCharacterAttackPacket(char* Data, int DataLength);
 
 	DECLARE_SINGLETON(CGamePacketManager);
 };

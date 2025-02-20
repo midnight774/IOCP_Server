@@ -37,6 +37,11 @@ public:
 		m_MoveDir += Dir;
 	}
 
+	void SetMoveDir(const Vector3& Dir)
+	{
+		m_MoveDir = Dir;
+	}
+
 	void SetLastUpdateTime(const LARGE_INTEGER Time)
 	{
 		m_LastUpdateTime = Time;

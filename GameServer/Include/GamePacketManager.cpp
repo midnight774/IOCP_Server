@@ -232,6 +232,15 @@ void CGamePacketManager::ProcessIocpEvent(const OVERLAPPED_ENTRY& Event)
 						ProcessCharacterMovePacket(RecvData, DataLength);
 						break;
 					}
+
+					case Packet_Type::CharacterAttack:
+					{
+						ProcessCharacterAttackPacket(RecvData, DataLength);
+					}
+						break;
+
+					case Packet_Type::AttackBox:
+						break;
 					case Packet_Type::Endpoint:
 					{
 						sockaddr_in Addr;
@@ -436,17 +445,32 @@ void CGamePacketManager::ProcessCharacterMovePacket(char* Data, int DataLength)
 
 	if (MoveData.IsEnd)
 	{
-		Session->m_ClientCharacterInfo->AddMoveDir(Dir * -1);
+		if(Session->m_ClientCharacterInfo->GetMoveDir() != Vector3(0.f,0.f,0.f))
+			Session->m_ClientCharacterInfo->AddMoveDir(Dir * -1);
 	}
 
 	else
 	{
 		Session->m_ClientCharacterInfo->AddMoveDir(Dir);
 		Session->m_ClientCharacterInfo->SetPos(Vector3(MoveData.PosX, MoveData.PosY, 0.f));
+		CGameLogicManager::GetInst()->AddUpdateClient(Session);
 	}
 
 	Session->m_ClientCharacterInfo->SetLastUpdateTime(Time);
 
-	CGameLogicManager::GetInst()->AddUpdateClient(Session);
 
+}
+
+void CGamePacketManager::ProcessCharacterAttackPacket(char* Data, int DataLength)
+{
+	CharacterAttackData AtkData;
+
+	memset(&AtkData, 0, sizeof(Data));
+	int Stride = sizeof(Packet_Type) + sizeof(int);
+
+	memcpy(&AtkData, Data + Stride, sizeof(CharacterAttackData));
+
+	std::shared_ptr<CClientSession> Session = CGameSessionManager::GetInst()->FindSessionByObjectID(AtkData.ObjectID);
+
+	CGameLogicManager::GetInst()->PushAttackingCharacter(Session);
 }
